@@ -1,48 +1,49 @@
 require('dotenv').config({ path: '../.env' });
-const { createClient } = require('@libsql/client');
+const { Pool } = require('pg');
 
 async function connectToDB() {
   try {
-    if (!process.env.TURSO_DB_URL || !process.env.TURSO_DB_TOKEN) {
-      throw new Error('Faltan variables de entorno');
+    if (!process.env.PG_HOST || !process.env.PG_USER || !process.env.PG_PASSWORD || !process.env.PG_DATABASE) {
+      throw new Error('Faltan variables de entorno para PostgreSQL');
     }
 
-    const db = createClient({
-      url: process.env.TURSO_DB_URL,
-      authToken: process.env.TURSO_DB_TOKEN,
+    const pool = new Pool({
+      host: process.env.PG_HOST,
+      user: process.env.PG_USER,
+      password: process.env.PG_PASSWORD,
+      database: process.env.PG_DATABASE,
+      port: process.env.PG_PORT || 5432,
     });
 
-    console.log('Conexión a Turso establecida correctamente');
+    console.log('Conexión a PostgreSQL establecida correctamente');
 
     // Crear tabla de usuarios
-    await db.execute(`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+  id SERIAL PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  email TEXT UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
     `);
-
-    console.log('Tabla "users" verificada o creada correctamente');
+    
 
     // Crear tabla de mensajes
-    await db.execute(`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        content TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      );
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
     `);
+    
 
-    console.log('Tabla "messages" verificada o creada correctamente');
-    return db;
+    return pool;
   } catch (error) {
-    console.error('Error al conectar con la base de datos o crear tabla:', error.message);
-    throw error; 
+    console.error('Error al conectar con PostgreSQL o crear tablas:', error.message);
+    throw error;
   }
 }
 

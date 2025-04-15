@@ -20,9 +20,12 @@
   "homepage": "https://github.com/JHOER-S-F/curso_chat_node#readme",
   "dependencies": {
     "@libsql/client": "^0.15.3",
+    "bcrypt": "^5.1.1",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "morgan": "1.10.0",
+    "pg": "^8.14.1",
     "socket.io": "4.8.1"
   }
 }
